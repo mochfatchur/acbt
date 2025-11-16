@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Commit Collector</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Commit Collector App</h1>
+
+    <!-- SELECT REPO -->
+    <button @click="chooseRepo">Pilih Folder Repository</button>
+    <p v-if="repoPath">Dipilih: {{ repoPath }}</p>
+
+    <!-- GENERATE HOOK -->
+    <button v-if="repoPath" @click="createHook">Generate commit-msg Hook</button>
+
+    <hr>
+
+    <h2>Commit Terkumpul</h2>
+    <button @click="loadCommits">Refresh</button>
+
+    <ul>
+      <li v-for="c in commits">
+        {{ c.timestamp }} — {{ c.message }}
+      </li>
+    </ul>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
