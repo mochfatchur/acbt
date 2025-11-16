@@ -42,6 +42,7 @@ function startLocalServer() {
           const list = store.get("commits", []);
           list.push({
             message: data.message,
+            repo: data.repo || "unknown",
             timestamp: new Date().toISOString()
           });
           store.set("commits", list);
@@ -91,13 +92,17 @@ COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
 
 APP_LOG="${repoPath}/commit-log.txt"
 
+# Ambil folder root repository
+REPO_DIR="$(git rev-parse --show-toplevel)"
+REPO_NAME="$(basename "$REPO_DIR")"
+
 # Simpan lokal per repo
 echo "$(date '+%Y-%m-%d %H:%M:%S') | $COMMIT_MSG" >> "$APP_LOG"
 
 # Kirim ke aplikasi Electron
 curl -s -X POST http://localhost:32145/commit \
   -H "Content-Type: application/json" \
-  -d "{\\"message\\": \\"$COMMIT_MSG\\"}" \
+  -d "{\\"message\\": \\"$COMMIT_MSG\\", \\"repo\\": \\"$REPO_NAME\\"}" \
   > /dev/null 2>&1
 
 echo ">>> commit-msg hook executed"

@@ -17,22 +17,54 @@
 
     <!-- Main content -->
     <main class="flex-1 p-6 overflow-auto">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-bold">Commit Logs</h1>
-            <button
-                @click="loadCommits"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition"
-                >
-                Refresh
-            </button>
-        </div>
-        <CommitList :items="commits" />
+
+      <!-- Header + Refresh -->
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold">Commit Logs</h1>
+
+        <button
+          @click="loadCommits"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex gap-4 mb-4">
+
+        <!-- Repo filter -->
+        <select
+          v-model="repoFilter"
+          class="border rounded px-2 py-1"
+        >
+          <option value="">All Repos</option>
+          <option
+            v-for="repo in availableRepos"
+            :key="repo"
+            :value="repo"
+          >
+            {{ repo }}
+          </option>
+        </select>
+
+        <!-- Date filter -->
+        <input
+          v-model="dateFilter"
+          type="date"
+          class="border rounded px-2 py-1"
+        />
+      </div>
+
+      <!-- Commit List -->
+      <CommitList :items="filteredCommits" />
+
     </main>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import RepoSelector from "./components/RepoSelector.vue";
 import CommitList from "./components/CommitList.vue";
 
@@ -41,7 +73,10 @@ export default {
 
   setup() {
     const repoPath = ref(null);
-    const commits = ref([]);
+
+    const allCommits = ref([]);   // semua commit
+    const repoFilter = ref("");   // repo name
+    const dateFilter = ref("");   // YYYY-MM-DD
 
     function setRepo(path) {
       repoPath.value = path;
@@ -54,32 +89,63 @@ export default {
       }
 
       const res = await window.electronAPI.generateHook(repoPath.value);
-
-      if (res.success) {
-        alert("Hook berhasil dipasang!");
-      } else {
-        alert("Error: " + res.error);
-      }
+      if (res.success) alert("Hook berhasil dipasang!");
+      else alert("Error: " + res.error);
     }
 
     async function loadCommits() {
-      commits.value = await window.electronAPI.getCommits();
+      allCommits.value = await window.electronAPI.getCommits();
     }
+
+    // Ambil daftar repo unik
+    const availableRepos = computed(() => {
+      const set = new Set(allCommits.value.map(c => c.repo).filter(Boolean));
+      return [...set];
+    });
+
+    // Filtering
+    const filteredCommits = computed(() => {
+      return allCommits.value.filter(commit => {
+        let ok = true;
+
+        // filter repo
+        if (repoFilter.value) {
+          ok = ok && commit.repo === repoFilter.value;
+        }
+
+        // filter tanggal
+        if (dateFilter.value) {
+          const commitDate = commit.timestamp.substring(0, 10);
+          ok = ok && commitDate === dateFilter.value;
+        }
+
+        return ok;
+      });
+    });
 
     loadCommits();
 
+    // auto refresh interval
     let intervalId = null;
-
     onMounted(() => {
-      loadCommits(); // initial load
-      intervalId = setInterval(loadCommits, 5000); // refresh setiap 5 detik
+      loadCommits();
+      intervalId = setInterval(loadCommits, 5000);
     });
-
     onUnmounted(() => {
       clearInterval(intervalId);
     });
 
-    return { repoPath, commits, generateHook, setRepo, loadCommits  };
+    return {
+      repoPath,
+      allCommits,
+      repoFilter,
+      dateFilter,
+      availableRepos,
+      filteredCommits,
+      generateHook,
+      setRepo,
+      loadCommits
+    };
   }
 };
 </script>
