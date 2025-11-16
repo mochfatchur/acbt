@@ -118,7 +118,8 @@ echo ">>> commit-msg hook executed"
 
 // Get commit list
 ipcMain.handle("get-commits", () => {
-  return store.get("commits", []);
+  const commits =  store.get("commits", []);
+  return commits.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 });
 
 // -------------------------
