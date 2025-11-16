@@ -1,101 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <title>Commit Collector</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    button {
-      padding: 8px 14px;
-      margin: 10px 0;
-      cursor: pointer;
-    }
-    .card {
-      border: 1px solid #ddd;
-      padding: 15px;
-      margin-top: 10px;
-      border-radius: 6px;
-      background: #fafafa;
-    }
-    .commit-msg {
-      white-space: pre-line;
-      font-family: monospace;
-    }
-  </style>
+  <title>ACBT Commit Collector</title>
+  <link rel="stylesheet" href="./assets/main.css" />
 </head>
-<body>
-
-  <div id="app">
-    <h1>Commit Collector</h1>
-
-    <button @click="chooseRepo">Pilih Repository</button>
-    <p v-if="repoPath">Dipilih: <strong>{{ repoPath }}</strong></p>
-
-    <button 
-      v-if="repoPath" 
-      @click="generateHook"
-      style="background: #4CAF50; color: white;"
-    >
-      Generate commit-msg Hook
-    </button>
-
-    <hr>
-
-    <h2>Commit Tersimpan</h2>
-
-    <button @click="loadCommits">Refresh</button>
-
-    <div v-for="(item, i) in commits" :key="i" class="card">
-      <div class="commit-msg">{{ item.message }}</div>
-      <div style="font-size: 12px; color: gray;">
-        {{ item.timestamp }}
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    const { createApp } = Vue;
-
-    createApp({
-      data() {
-        return {
-          repoPath: null,
-          commits: []
-        };
-      },
-
-      methods: {
-        async chooseRepo() {
-          const path = await window.electronAPI.selectRepo();
-          this.repoPath = path;
-        },
-
-        async generateHook() {
-          if (!this.repoPath) return;
-
-          const result = await window.electronAPI.generateHook(this.repoPath);
-          if (result.success) {
-            alert("Hook berhasil dibuat!");
-          } else {
-            alert("Gagal membuat hook: " + result.error);
-          }
-        },
-
-        async loadCommits() {
-          this.commits = await window.electronAPI.getCommits();
-        }
-      },
-
-      mounted() {
-        this.loadCommits();
-      }
-    }).mount("#app");
-  </script>
-
+<body class="bg-gray-100">
+  <div id="app"></div>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

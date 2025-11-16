@@ -17,8 +17,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-
-  win.loadFile(path.join(__dirname, 'renderer/index.html'));
+  
+  if (!app.isPackaged) {
+    win.loadURL("http://localhost:5173");
+  } else {
+    win.loadFile(path.join(__dirname, "dist/index.html"));
+  }
 }
 
 // -------------------------
