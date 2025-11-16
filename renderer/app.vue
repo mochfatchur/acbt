@@ -13,6 +13,14 @@
       >
         Install Hook
       </button>
+
+      <button
+        class="mt-2 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+        @click="showEndpointModal = true"
+      >
+        Atur Endpoint
+      </button>
+
     </aside>
 
     <!-- Main content -->
@@ -59,6 +67,40 @@
       <!-- Commit List -->
       <CommitList :items="filteredCommits" />
 
+
+      <!-- Modal Atur Endpoint -->
+      <div
+        v-if="showEndpointModal"
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center"
+      >
+        <div class="bg-white p-6 rounded shadow w-96">
+          <h2 class="text-lg font-bold mb-3">Atur Endpoint</h2>
+
+          <input
+            v-model="endpoint"
+            type="text"
+            placeholder="https://example.com/api/commit"
+            class="border w-full px-2 py-1 rounded mb-4"
+          />
+
+          <div class="flex justify-end gap-2">
+            <button
+              class="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+              @click="showEndpointModal = false"
+            >
+              Cancel
+            </button>
+
+            <button
+              class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+              @click="saveEndpoint"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
@@ -73,6 +115,10 @@ export default {
 
   setup() {
     const repoPath = ref(null);
+
+    const showEndpointModal = ref(false);
+    const endpoint = ref("");
+    
 
     const allCommits = ref([]);   // semua commit
     const repoFilter = ref("");   // repo name
@@ -93,6 +139,14 @@ export default {
       else alert("Error: " + res.error);
     }
 
+    // simpan endpoint
+    async function saveEndpoint() {
+      await window.electronAPI.setEndpoint(endpoint.value);
+      showEndpointModal.value = false;
+      alert("Endpoint disimpan!");
+    }
+
+    // get commits data
     async function loadCommits() {
       allCommits.value = await window.electronAPI.getCommits();
     }
@@ -127,8 +181,10 @@ export default {
 
     // auto refresh interval
     let intervalId = null;
-    onMounted(() => {
+    onMounted(async() => {
       loadCommits();
+      // ← ambil dari store
+      endpoint.value = await window.electronAPI.getEndpoint();
       intervalId = setInterval(loadCommits, 5000);
     });
     onUnmounted(() => {
@@ -144,7 +200,10 @@ export default {
       filteredCommits,
       generateHook,
       setRepo,
-      loadCommits
+      loadCommits,
+      showEndpointModal,
+      endpoint,
+      saveEndpoint
     };
   }
 };

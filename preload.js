@@ -11,6 +11,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Ambil daftar commit (untuk UI)
   getCommits: () => ipcRenderer.invoke("get-commits"),
 
+  // Ambil endpoint
+  getEndpoint: () => ipcRenderer.invoke("get-endpoint"),
+
+  // Simpan endpoint
+  setEndpoint: (value) => ipcRenderer.invoke("set-endpoint", value),
+
+  // Kirim commit ke endpoint
+  sendCommit: (commit) => ipcRenderer.invoke("send-commit", commit),
+
   // Masih mempertahankan contoh fungsi ping bila mau dipakai
   ping: () => ipcRenderer.invoke("ping")
 });

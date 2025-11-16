@@ -6,6 +6,10 @@ const http = require("http");
 
 const store = new Store();
 
+if (!store.get("apiEndpoint")) {
+  store.set("apiEndpoint", "");
+}
+
 // -------------------------
 //  Create Window
 // -------------------------
@@ -43,7 +47,7 @@ function startLocalServer() {
           list.push({
             message: data.message,
             repo: data.repo || "unknown",
-            timestamp: new Date().toISOString()
+            timestamp: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString().replace("Z", "+07:00")
           });
           store.set("commits", list);
 
@@ -126,6 +130,66 @@ ipcMain.handle("get-commits", () => {
   const commits =  store.get("commits", []);
   return commits.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 });
+
+// Get API endpoint
+ipcMain.handle("get-endpoint", () => {
+  return store.get("apiEndpoint", "");
+});
+
+// Set API endpoint
+ipcMain.handle("set-endpoint", (event, value) => {
+  store.set("apiEndpoint", value);
+  return true;
+});
+
+
+ipcMain.handle("send-commit", async (event, commit) => {
+  console.log("masuk endpoint: ", commit);
+  const endpoint = store.get("apiEndpoint", "");
+
+  if (!endpoint) {
+    return { success: false, error: "Endpoint belum diatur." };
+  }
+
+  return new Promise((resolve) => {
+    const data = JSON.stringify({ task: commit.task});
+
+    const url = new URL(endpoint);
+
+    console.log('endpoint: ', endpoint);
+    console.log('data: ', data);
+
+    const options = {
+      hostname: url.hostname,
+      port: url.port || 80,
+      path: url.pathname,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(data),
+      }
+    };
+
+    const req = http.request(options, (res) => {
+      let body = "";
+      res.on("data", chunk => body += chunk);
+      res.on("end", () => {
+        resolve({
+          success: res.statusCode === 200,
+          response: body
+        });
+      });
+    });
+
+    req.on("error", (err) => {
+      resolve({ success: false, error: err.message });
+    });
+
+    req.write(data);
+    req.end();
+  });
+});
+
 
 // -------------------------
 //  App Init
